@@ -9,6 +9,8 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import kotlin.math.cos
+import kotlin.math.sin
 
 class VoxelRenderer(context: Context) : GLSurfaceView(context), GLSurfaceView.Renderer {
     
@@ -17,7 +19,6 @@ class VoxelRenderer(context: Context) : GLSurfaceView(context), GLSurfaceView.Re
     private var shaderProgram: Int = 0
     private var mvpLocation: Int = 0
     
-    // Câmera e movimento
     private val viewMatrix = FloatArray(16)
     private val projMatrix = FloatArray(16)
     private val mvpMatrix = FloatArray(16)
@@ -28,12 +29,9 @@ class VoxelRenderer(context: Context) : GLSurfaceView(context), GLSurfaceView.Re
     private var pitch = -20f
     private var yaw = -45f
     
-    // Física
     private var velocityY = 0f
     private val gravity = -20f
-    private var isGrounded = false
     
-    // Controles
     private var moveForward = false
     private var moveBackward = false
     private var moveLeft = false
@@ -43,7 +41,6 @@ class VoxelRenderer(context: Context) : GLSurfaceView(context), GLSurfaceView.Re
     private var lastTouchY = 0f
     private var isDragging = false
     
-    // FPS
     private var fps = 0f
     private var frameCount = 0
     private var lastTime = System.nanoTime()
@@ -102,47 +99,49 @@ class VoxelRenderer(context: Context) : GLSurfaceView(context), GLSurfaceView.Re
     }
     
     private fun updatePhysics() {
-        // Gravidade
-        velocityY += gravity * 0.016f
-        cameraY += velocityY * 0.016f
+        val deltaTime = 0.016f
+        velocityY += gravity * deltaTime
+        cameraY += velocityY * deltaTime
         
-        // Colisão com o chão (altura do terreno ~12 blocos)
         if (cameraY < 14f) {
             cameraY = 14f
             velocityY = 0f
-            isGrounded = true
-        } else {
-            isGrounded = false
         }
         
-        // Movimento horizontal
         val speed = 0.15f
-        val yawRad = Math.toRadians(yaw.toDouble()).toFloat()
+        val yawRad = Math.toRadians(yaw.toDouble())
         
         if (moveForward) {
-            cameraX += Math.cos(yawRad) * speed
-            cameraZ += Math.sin(yawRad) * speed
+            cameraX += (cos(yawRad) * speed).toFloat()
+            cameraZ += (sin(yawRad) * speed).toFloat()
         }
         if (moveBackward) {
-            cameraX -= Math.cos(yawRad) * speed
-            cameraZ -= Math.sin(yawRad) * speed
+            cameraX -= (cos(yawRad) * speed).toFloat()
+            cameraZ -= (sin(yawRad) * speed).toFloat()
         }
         if (moveLeft) {
-            cameraX -= Math.cos(yawRad + Math.PI.toFloat() / 2f) * speed
-            cameraZ -= Math.sin(yawRad + Math.PI.toFloat() / 2f) * speed
+            cameraX -= (cos(yawRad + Math.PI / 2.0) * speed).toFloat()
+            cameraZ -= (sin(yawRad + Math.PI / 2.0) * speed).toFloat()
         }
         if (moveRight) {
-            cameraX += Math.cos(yawRad + Math.PI.toFloat() / 2f) * speed
-            cameraZ += Math.sin(yawRad + Math.PI.toFloat() / 2f) * speed
+            cameraX += (cos(yawRad + Math.PI / 2.0) * speed).toFloat()
+            cameraZ += (sin(yawRad + Math.PI / 2.0) * speed).toFloat()
         }
     }
     
     private fun updateCamera() {
-        Matrix.setLookAtM(viewMatrix, 0, cameraX, cameraY, cameraZ,
-            cameraX + Math.cos(Math.toRadians(yaw.toDouble())).toFloat() * Math.cos(Math.toRadians(pitch.toDouble())).toFloat(),
-            cameraY + Math.sin(Math.toRadians(pitch.toDouble())).toFloat(),
-            cameraZ + Math.sin(Math.toRadians(yaw.toDouble())).toFloat() * Math.cos(Math.toRadians(pitch.toDouble())).toFloat(),
-            0f, 1f, 0f)
+        val yawRad = Math.toRadians(yaw.toDouble())
+        val pitchRad = Math.toRadians(pitch.toDouble())
+        
+        val targetX = (cameraX + cos(yawRad) * cos(pitchRad)).toFloat()
+        val targetY = (cameraY + sin(pitchRad)).toFloat()
+        val targetZ = (cameraZ + sin(yawRad) * cos(pitchRad)).toFloat()
+        
+        Matrix.setLookAtM(viewMatrix, 0,
+            cameraX, cameraY, cameraZ,
+            targetX, targetY, targetZ,
+            0f, 1f, 0f
+        )
         Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, viewMatrix, 0)
     }
     
@@ -157,7 +156,6 @@ class VoxelRenderer(context: Context) : GLSurfaceView(context), GLSurfaceView.Re
         }
     }
     
-    // Controles públicos para a UI
     fun onCameraDrag(dx: Float, dy: Float) {
         yaw += dx * 0.3f
         pitch -= dy * 0.3f
@@ -169,7 +167,6 @@ class VoxelRenderer(context: Context) : GLSurfaceView(context), GLSurfaceView.Re
     fun moveLeft() { moveLeft = true }
     fun moveRight() { moveRight = true }
     
-    // Parar movimento quando soltar o botão
     fun stopMoveForward() { moveForward = false }
     fun stopMoveBackward() { moveBackward = false }
     fun stopMoveLeft() { moveLeft = false }
