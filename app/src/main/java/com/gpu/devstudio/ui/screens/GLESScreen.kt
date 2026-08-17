@@ -7,27 +7,30 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.gpu.devstudio.engine.HardwareQuerier
+import com.gpu.devstudio.engine.GLContextManager
 import com.gpu.devstudio.ui.theme.*
 
 @Composable
 fun GLESScreen() {
-    var glesData by remember { mutableStateOf("Consultando hardware...") }
-    var isLoading by remember { mutableStateOf(true) }
-
-    // Executar a query nativa ao montar a tela
+    val context = LocalContext.current
+    val glManager = remember { GLContextManager(context) }
+    
+    val glesInfo by glManager.glesInfo.collectAsState()
+    val extensions by glManager.extensions.collectAsState()
+    val limits by glManager.limits.collectAsState()
+    
     LaunchedEffect(Unit) {
-        try {
-            val querier = HardwareQuerier()
-            glesData = querier.getGLESInfoNative()
-            isLoading = false
-        } catch (e: Exception) {
-            glesData = "ERRO ao consultar hardware: ${e.message}\n\nNota: Esta aba requer um contexto GL ativo. Em versões futuras, isso será injetado via GLSurfaceView."
-            isLoading = false
+        glManager.initialize()
+    }
+    
+    DisposableEffect(Unit) {
+        onDispose {
+            glManager.destroy()
         }
     }
-
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -38,17 +41,61 @@ fun GLESScreen() {
         Text("OpenGL ES (Dados Reais)", color = AccentGLES, style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(16.dp))
         
+        // Card de Informações Básicas
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = BackgroundCards)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                if (isLoading) {
+                Text("INFORMAÇÕES DO HARDWARE", color = AccentGLES, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                if (glesInfo.isEmpty()) {
                     CircularProgressIndicator(color = AccentGLES, modifier = Modifier.align(androidx.compose.ui.Alignment.CenterHorizontally))
                 } else {
-                    Text("INFORMAÇÕES DO HARDWARE", color = AccentGLES, style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(glesData, color = TextPrimary, style = MaterialTheme.typography.bodyMedium)
+                    Text(glesInfo, color = TextPrimary, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Card de Limites
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = BackgroundCards)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("LIMITES DO HARDWARE", color = AccentGLES, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                if (limits.isEmpty()) {
+                    Text("Carregando...", color = TextSecondary)
+                } else {
+                    limits.forEach { (key, value) ->
+                        Text("$key: $value", color = TextPrimary, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Card de Extensões
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = BackgroundCards)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("EXTENSÕES DISPONÍVEIS (${extensions.size})", color = AccentGLES, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                if (extensions.isEmpty()) {
+                    Text("Carregando...", color = TextSecondary)
+                } else {
+                    extensions.take(20).forEach { ext ->
+                        Text("• $ext", color = TextPrimary, style = MaterialTheme.typography.bodySmall)
+                    }
+                    if (extensions.size > 20) {
+                        Text("... e mais ${extensions.size - 20} extensões", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
         }
