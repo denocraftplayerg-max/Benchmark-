@@ -39,9 +39,12 @@ jobs:
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Upload APK Assinado como Artefacto
+      - name: Upload APK Assinado (Sem ZIP)
         uses: actions/upload-artifact@v4
         with:
-          name: AngleBenchmark-Release-APK
+          # Definir a extensão .apk diretamente no nome do artefato
+          name: AngleBenchmark-Release.apk
           path: ${{ steps.sign_app.outputs.signedReleaseFile }}
           if-no-files-found: error
+          # Desativa a compressão do GitHub Actions para não gerar um arquivo .zip
+          compression: 'none'
