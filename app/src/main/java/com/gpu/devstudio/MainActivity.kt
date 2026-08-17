@@ -7,7 +7,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.gpu.devstudio.ui.theme.GPUDevStudioTheme
+import com.gpu.devstudio.ui.theme.BackgroundCards
+import com.gpu.devstudio.ui.theme.TextPrimary
+import com.gpu.devstudio.ui.theme.AccentGLES
 import com.gpu.devstudio.ui.screens.*
 
 class MainActivity : ComponentActivity() {

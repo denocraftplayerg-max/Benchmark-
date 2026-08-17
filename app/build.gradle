@@ -14,15 +14,6 @@ android {
         targetSdk 35
         versionCode 1
         versionName "2.0"
-        ndk {
-            abiFilters 'arm64-v8a'
-        }
-        externalNativeBuild {
-            cmake {
-                cppFlags "-std=c++17 -O3"
-                arguments "-DANDROID_STL=c++_shared"
-            }
-        }
     }
 
     buildTypes {
@@ -31,12 +22,6 @@ android {
         }
     }
     
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-            version "3.22.1"
-        }
-    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -63,4 +48,7 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.8.2'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
     implementation 'androidx.navigation:navigation-compose:2.7.7'
+    
+    // Coroutines para SystemMonitor
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 }

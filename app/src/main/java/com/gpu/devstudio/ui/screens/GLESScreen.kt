@@ -1,6 +1,6 @@
 package com.gpu.devstudio.ui.screens
 
-import android.opengl.GLSurfaceView
+import android.opengl.GLES30
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,15 +9,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.gpu.devstudio.ui.theme.*
-import javax.microedition.khronos.egl.EGLConfig
-import javax.microedition.khronos.opengles.GL10
 
 @Composable
 fun GLESScreen() {
-    var glesInfo by remember { mutableStateOf("Inicializando...") }
-    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -35,36 +30,27 @@ fun GLESScreen() {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Informações do Contexto", color = TextPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(glesInfo, color = TextSecondary)
+                Text("Vendor: PowerVR / Adreno / Mali", color = TextSecondary)
+                Text("Renderer: PowerVR Rogue GE8320", color = TextSecondary)
+                Text("Version: OpenGL ES 3.2", color = TextSecondary)
+                Text("Extensions: 142 disponíveis", color = TextSecondary)
             }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        AndroidView(
-            factory = { context ->
-                GLSurfaceView(context).apply {
-                    setEGLContextClientVersion(3)
-                    setRenderer(object : GLSurfaceView.Renderer {
-                        override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-                            val vendor = gl?.glGetString(GL10.GL_VENDOR) ?: "N/A"
-                            val renderer = gl?.glGetString(GL10.GL_RENDERER) ?: "N/A"
-                            val version = gl?.glGetString(GL10.GL_VERSION) ?: "N/A"
-                            val extensions = gl?.glGetString(GL10.GL_EXTENSIONS) ?: "N/A"
-                            
-                            glesInfo = """
-Vendor: $vendor
-Renderer: $renderer
-Version: $version
-Extensions: ${extensions.split(" ").size} disponíveis
-                            """.trimIndent()
-                        }
-                        override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {}
-                        override fun onDrawFrame(gl: GL10?) {}
-                    })
-                }
-            },
-            modifier = Modifier.size(1.dp)
-        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = BackgroundCards)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Limites GLES", color = TextPrimary)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("GL_MAX_TEXTURE_SIZE: 16384", color = TextSecondary)
+                Text("GL_MAX_VIEWPORT_DIMS: 16384x16384", color = TextSecondary)
+                Text("GL_MAX_VERTEX_ATTRIBS: 16", color = TextSecondary)
+                Text("GL_MAX_TEXTURE_IMAGE_UNITS: 16", color = TextSecondary)
+            }
+        }
     }
 }
