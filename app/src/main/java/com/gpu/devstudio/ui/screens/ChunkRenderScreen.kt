@@ -7,77 +7,35 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.gpu.devstudio.engine.chunk.ChunkRenderer
+import com.gpu.devstudio.engine.VoxelRenderer
 import com.gpu.devstudio.ui.theme.*
 
 @Composable
 fun ChunkRenderScreen() {
     var fps by remember { mutableStateOf(0f) }
-    var frameTime by remember { mutableStateOf(0f) }
-    var renderer: ChunkRenderer? by remember { mutableStateOf(null) }
+    var renderer: VoxelRenderer? by remember { mutableStateOf(null) }
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundPrimary)
-    ) {
-        // Barra de status FPS
+    Column(modifier = Modifier.fillMaxSize().background(BackgroundPrimary)) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(8.dp),
             colors = CardDefaults.cardColors(containerColor = BackgroundCards)
         ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+            Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("FPS: ${"%.1f".format(fps)}", color = AccentGLES)
-                Text("Frame: ${"%.2f".format(frameTime)}ms", color = TextPrimary)
+                Text("Voxel Engine: ATIVO", color = AccentVulkan)
             }
         }
         
-        // GLSurfaceView com o renderer
         AndroidView(
             factory = { context ->
-                ChunkRenderer(context).apply {
-                    onFPSUpdate = { newFps, newFrameTime ->
-                        fps = newFps
-                        frameTime = newFrameTime
-                    }
+                VoxelRenderer(context).apply {
+                    onFPSUpdate = { newFps -> fps = newFps }
                     renderer = this
                 }
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
+            modifier = Modifier.fillMaxWidth().weight(1f)
         )
         
-        // Controles de movimento
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(onClick = { renderer?.moveLeft() }) {
-                Text("◀ Esquerda")
-            }
-            Button(onClick = { renderer?.moveForward() }) {
-                Text("▲ Frente")
-            }
-            Button(onClick = { renderer?.moveBackward() }) {
-                Text("▼ Trás")
-            }
-            Button(onClick = { renderer?.moveRight() }) {
-                Text("▶ Direita")
-            }
-        }
-        
-        Text(
-            "Arraste na tela para olhar ao redor",
-            color = TextSecondary,
-            modifier = Modifier.padding(8.dp)
-        )
+        Text("Arraste para olhar ao redor", color = TextSecondary, modifier = Modifier.padding(8.dp))
     }
 }
