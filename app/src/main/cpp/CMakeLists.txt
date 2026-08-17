@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.22.1)
 project("voxel_engine")
 
+# Compila APENAS o motor voxel
 add_library(voxel_engine SHARED VoxelEngine.cpp)
 
 find_library(log-lib log)
