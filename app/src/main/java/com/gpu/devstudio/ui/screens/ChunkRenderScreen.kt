@@ -13,7 +13,6 @@ import com.gpu.devstudio.ui.theme.*
 @Composable
 fun ChunkRenderScreen() {
     var fps by remember { mutableStateOf(0f) }
-    var renderer: VoxelRenderer? by remember { mutableStateOf(null) }
     
     Column(modifier = Modifier.fillMaxSize().background(BackgroundPrimary)) {
         Card(
@@ -30,12 +29,11 @@ fun ChunkRenderScreen() {
             factory = { context ->
                 VoxelRenderer(context).apply {
                     onFPSUpdate = { newFps -> fps = newFps }
-                    renderer = this
                 }
             },
             modifier = Modifier.fillMaxWidth().weight(1f)
         )
         
-        Text("Arraste para olhar ao redor", color = TextSecondary, modifier = Modifier.padding(8.dp))
+        Text("Arraste na tela para olhar ao redor", color = TextSecondary, modifier = Modifier.padding(8.dp))
     }
 }

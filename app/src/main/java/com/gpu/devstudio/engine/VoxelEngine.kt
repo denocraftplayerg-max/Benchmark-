@@ -6,6 +6,6 @@ class VoxelEngine {
             System.loadLibrary("voxel_engine")
         }
     }
-    // Retorna o array de ints compactados diretamente (mais seguro que ponteiros no Android)
+    // O C++ gera os dados e retorna um IntArray seguro para o Kotlin
     external fun generateChunk(): IntArray
 }

@@ -51,9 +51,11 @@ class VoxelRenderer(context: Context) : GLSurfaceView(context), GLSurfaceView.Re
         shaderProgram = createProgram("voxel.vert", "voxel.frag")
         mvpLocation = GLES30.glGetUniformLocation(shaderProgram, "u_MVP")
 
+        // 1. Gerar chunk no C++ (Face culling e empacotamento 32-bit feitos aqui)
         val packedData = engine.generateChunk()
         vertexCount = packedData.size
 
+        // 2. Upload para a GPU
         val vbo = IntArray(1)
         GLES30.glGenBuffers(1, vbo, 0)
         GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vbo[0])
@@ -66,7 +68,7 @@ class VoxelRenderer(context: Context) : GLSurfaceView(context), GLSurfaceView.Re
         
         GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, buffer.capacity() * 4, buffer, GLES30.GL_STATIC_DRAW)
         
-        // CRUCIAL: glVertexAttribIPointer (com 'I') para inteiros sem conversão para float
+        // 3. O SEGREDO: glVertexAttribIPointer (com 'I') para inteiros puros sem conversão
         GLES30.glVertexAttribIPointer(0, 1, GLES30.GL_UNSIGNED_INT, 4, 0)
         GLES30.glEnableVertexAttribArray(0)
     }

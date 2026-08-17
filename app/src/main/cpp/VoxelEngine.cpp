@@ -48,6 +48,7 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_gpu_devstudio_engine_VoxelEngine
     int chunkSize = 16;
     std::vector<uint8_t> voxels(chunkSize * chunkSize * chunkSize, 0);
     
+    // Geração procedural do terreno
     for (int x = 0; x < chunkSize; x++) {
         for (int z = 0; z < chunkSize; z++) {
             float h = noise3d(x * 0.15f, 0, z * 0.15f) * 8.0f + 4.0f;
@@ -65,6 +66,7 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_gpu_devstudio_engine_VoxelEngine
         return voxels[x + y * chunkSize + z * chunkSize * chunkSize];
     };
 
+    // Face Culling e geração de malha
     for (int x = 0; x < chunkSize; x++) {
         for (int y = 0; y < chunkSize; y++) {
             for (int z = 0; z < chunkSize; z++) {

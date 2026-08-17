@@ -1,13 +1,10 @@
 #version 300 es
 precision mediump float;
-
 in vec2 inUV;
 in float inAO;
 in flat uint inBlockID;
-
 out vec4 fragColor;
 
-// Array de texturas (simulado com cores por enquanto para garantir compilação sem assets externos)
 vec3 getBlockColor(uint id) {
     if (id == 1u) return vec3(0.5, 0.3, 0.1); // Terra
     if (id == 2u) return vec3(0.2, 0.8, 0.3); // Relva
