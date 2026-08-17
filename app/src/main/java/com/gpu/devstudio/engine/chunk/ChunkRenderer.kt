@@ -12,7 +12,7 @@ class ChunkRenderer(context: Context) : GLSurfaceView(context), GLSurfaceView.Re
     private val shader = ShaderProgram()
     private val chunkMesh = ChunkMesh(16)
     private val camera = CameraController()
-    private val fpsCalculator = FPSCalalculator()
+    private val fpsCalculator = FPSCalculator()
     
     private var textureId = 0
     private val modelMatrix = FloatArray(16)
