@@ -1,13 +1,15 @@
 package com.gpu.devstudio.engine
 
-import android.content.Context
-import android.opengl.GLSurfaceView
+import android.opengl.EGL14
+import android.opengl.EGLConfig
+import android.opengl.EGLContext
+import android.opengl.EGLDisplay
+import android.opengl.EGLSurface
+import android.opengl.GLES20
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import javax.microedition.khronos.egl.EGLConfig
-import javax.microedition.khronos.opengles.GL10
 
-class GLContextManager(context: Context) {
+class GLContextManager {
     
     private val _glesInfo = MutableStateFlow("")
     val glesInfo: StateFlow<String> = _glesInfo
@@ -18,62 +20,85 @@ class GLContextManager(context: Context) {
     private val _limits = MutableStateFlow<Map<String, Int>>(emptyMap())
     val limits: StateFlow<Map<String, Int>> = _limits
     
-    private var glSurfaceView: GLSurfaceView? = null
-    
+    private var eglDisplay: EGLDisplay = EGL14.EGL_NO_DISPLAY
+    private var eglContext: EGLContext = EGL14.EGL_NO_CONTEXT
+    private var eglSurface: EGLSurface = EGL14.EGL_NO_SURFACE
+
     fun initialize() {
-        glSurfaceView = GLSurfaceView(context).apply {
-            setEGLContextClientVersion(3)
-            setRenderer(object : GLSurfaceView.Renderer {
-                override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-                    queryGLESInfo(gl)
-                    queryExtensions(gl)
-                    queryLimits(gl)
-                }
-                
-                override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {}
-                
-                override fun onDrawFrame(gl: GL10?) {
-                    // Não precisa renderizar nada
-                }
-            })
-            isVisible = false
-            layoutParams = android.view.ViewGroup.LayoutParams(1, 1)
+        try {
+            eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
+            if (eglDisplay == EGL14.EGL_NO_DISPLAY) {
+                _glesInfo.value = "Falha ao obter EGLDisplay"
+                return
+            }
+
+            val version = IntArray(2)
+            EGL14.eglInitialize(eglDisplay, version, 0, version, 1)
+
+            val attribList = intArrayOf(
+                EGL14.EGL_RED_SIZE, 8,
+                EGL14.EGL_GREEN_SIZE, 8,
+                EGL14.EGL_BLUE_SIZE, 8,
+                EGL14.EGL_ALPHA_SIZE, 8,
+                EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+                EGL14.EGL_NONE
+            )
+            val configs = arrayOfNulls<EGLConfig>(1)
+            val numConfigs = IntArray(1)
+            EGL14.eglChooseConfig(eglDisplay, attribList, 0, configs, 0, 1, numConfigs, 0)
+
+            val ctxAttribs = intArrayOf(
+                EGL14.EGL_CONTEXT_CLIENT_VERSION, 3, // Solicita GLES 3
+                EGL14.EGL_NONE
+            )
+            eglContext = EGL14.eglCreateContext(eglDisplay, configs[0], EGL14.EGL_NO_CONTEXT, ctxAttribs, 0)
+            
+            val surfaceAttribs = intArrayOf(EGL14.EGL_NONE)
+            eglSurface = EGL14.eglCreatePbufferSurface(eglDisplay, configs[0], surfaceAttribs, 0)
+            
+            EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)
+
+            // Agora o contexto está ativo, podemos chamar GLES20/GLES30 com segurança
+            queryGLESInfo()
+            queryExtensions()
+            queryLimits()
+
+        } catch (e: Exception) {
+            _glesInfo.value = "Erro ao inicializar EGL: ${e.message}"
         }
     }
     
-    private fun queryGLESInfo(gl: GL10?) {
-        val vendor = gl?.glGetString(GL10.GL_VENDOR) ?: "Unknown"
-        val renderer = gl?.glGetString(GL10.GL_RENDERER) ?: "Unknown"
-        val version = gl?.glGetString(GL10.GL_VERSION) ?: "Unknown"
-        val glslVersion = gl?.glGetString(GL10.GL_EXTENSIONS) ?: "N/A"
+    private fun queryGLESInfo() {
+        val vendor = GLES20.glGetString(GLES20.GL_VENDOR) ?: "Unknown"
+        val renderer = GLES20.glGetString(GLES20.GL_RENDERER) ?: "Unknown"
+        val version = GLES20.glGetString(GLES20.GL_VERSION) ?: "Unknown"
+        val glslVersion = GLES20.glGetString(GLES20.GL_SHADING_LANGUAGE_VERSION) ?: "Unknown"
         
         _glesInfo.value = """
 VENDOR: $vendor
 RENDERER: $renderer
 VERSION: $version
-GLSL VERSION: OpenGL ES 3.0+
+GLSL VERSION: $glslVersion
         """.trimIndent()
     }
     
-    private fun queryExtensions(gl: GL10?) {
-        val extString = gl?.glGetString(GL10.GL_EXTENSIONS) ?: ""
+    private fun queryExtensions() {
+        val extString = GLES20.glGetString(GLES20.GL_EXTENSIONS) ?: ""
         _extensions.value = extString.split(" ").filter { it.isNotEmpty() }
     }
     
-    private fun queryLimits(gl: GL10?) {
-        if (gl == null) return
-        
+    private fun queryLimits() {
         val maxTextureSize = IntArray(1)
-        gl.glGetIntegerv(GL10.GL_MAX_TEXTURE_SIZE, maxTextureSize, 0)
+        GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_SIZE, maxTextureSize, 0)
         
         val maxViewportDims = IntArray(2)
-        gl.glGetIntegerv(GL10.GL_MAX_VIEWPORT_DIMS, maxViewportDims, 0)
+        GLES20.glGetIntegerv(GLES20.GL_MAX_VIEWPORT_DIMS, maxViewportDims, 0)
         
         val maxVertexAttribs = IntArray(1)
-        gl.glGetIntegerv(GL10.GL_MAX_VERTEX_ATTRIBS, maxVertexAttribs, 0)
+        GLES20.glGetIntegerv(GLES20.GL_MAX_VERTEX_ATTRIBS, maxVertexAttribs, 0)
         
         val maxTextureImageUnits = IntArray(1)
-        gl.glGetIntegerv(GL10.GL_MAX_TEXTURE_IMAGE_UNITS, maxTextureImageUnits, 0)
+        GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_IMAGE_UNITS, maxTextureImageUnits, 0)
         
         _limits.value = mapOf(
             "GL_MAX_TEXTURE_SIZE" to maxTextureSize[0],
@@ -85,7 +110,18 @@ GLSL VERSION: OpenGL ES 3.0+
     }
     
     fun destroy() {
-        glSurfaceView?.onPause()
-        glSurfaceView?.onDestroy()
+        if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
+            EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT)
+            if (eglSurface != EGL14.EGL_NO_SURFACE) {
+                EGL14.eglDestroySurface(eglDisplay, eglSurface)
+            }
+            if (eglContext != EGL14.EGL_NO_CONTEXT) {
+                EGL14.eglDestroyContext(eglDisplay, eglContext)
+            }
+            EGL14.eglTerminate(eglDisplay)
+        }
+        eglDisplay = EGL14.EGL_NO_DISPLAY
+        eglContext = EGL14.EGL_NO_CONTEXT
+        eglSurface = EGL14.EGL_NO_SURFACE
     }
 }

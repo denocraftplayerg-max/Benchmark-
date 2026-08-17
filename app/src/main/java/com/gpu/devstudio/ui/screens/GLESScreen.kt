@@ -7,15 +7,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.gpu.devstudio.engine.GLContextManager
 import com.gpu.devstudio.ui.theme.*
 
 @Composable
 fun GLESScreen() {
-    val context = LocalContext.current
-    val glManager = remember { GLContextManager(context) }
+    val glManager = remember { GLContextManager() }
     
     val glesInfo by glManager.glesInfo.collectAsState()
     val extensions by glManager.extensions.collectAsState()
@@ -41,7 +39,6 @@ fun GLESScreen() {
         Text("OpenGL ES (Dados Reais)", color = AccentGLES, style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Card de Informações Básicas
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = BackgroundCards)
@@ -59,7 +56,6 @@ fun GLESScreen() {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Card de Limites
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = BackgroundCards)
@@ -79,7 +75,6 @@ fun GLESScreen() {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Card de Extensões
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = BackgroundCards)
