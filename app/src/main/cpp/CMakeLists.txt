@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.10.2)
 project("anglebenchmark")
 
-# Adicionar diretório das libs pré-compiladas
-set(ANGLE_LIBS_DIR ${CMAKE_SOURCE_DIR}/../../libs/arm64-v8a)
+# Caminho correto: subir 3 níveis (cpp -> main -> src -> app)
+set(ANGLE_LIBS_DIR ${CMAKE_SOURCE_DIR}/../../../libs/arm64-v8a)
 
 add_library(benchmark_engine SHARED benchmark_engine.cpp)
 
